@@ -1,52 +1,98 @@
+/* eslint-disable @next/next/no-img-element */
 import Head from 'next/head'
 import Image from 'next/image'
 import Pokedex from 'pokedex-promise-v2'
 import { useState, useEffect } from 'react'
+import ReactLoading from 'react-loading';
 
 const Poke = new Pokedex()
 
-const PokeCard = ({label, url=null, onClick=null}) => {
-  return <div onClick={() => onClick()} className="p-6 border border-gray-300 hover:bg-yellow-50 cursor-pointer rounded">
-    <div className="font-medium">{label}</div>
-    <div className="text-xs text-gray-500 break-words">{url}</div>
+const padNum = (num, size=3) => {
+  num = num.toString();
+  while (num.length < size) num = "0" + num;
+  return num;
+}
+
+const PokeCard = ({poke=null, label=null, onClick}) => {
+  return <div onClick={() => onClick()} className="px-4 py-3 mt-10 border border-gray-300 hover:bg-slate-700 cursor-pointer rounded">
+    {
+      poke ?
+      <div className='flex justify-center -mt-10'>
+        <img src={poke.sprites.front_default} alt={poke.name} />
+      </div>
+      // <div className="text-xs text-gray-500 break-words">{poke.sprites.back_default}</div>
+      : null
+    }
+    {
+      poke ?
+      <div className="flex justify-between items-end">
+        <div className='text-xs opacity-50'>{'#' + padNum(poke.id)}</div>
+        <div className="font-medium capitalize">{poke.name}</div>
+      </div>
+      : <div className="font-medium">{label}</div>
+    }
+  </div>
+}
+
+const LoadingTop = ({hidden=1}) => {
+  return <div hidden={hidden} className="fixed top-0 right-0 m-4 w-96 bg-white rounded shadow z-20 opacity-50 hover:opacity-70 cursor-pointer">
+    <div className="w-full flex gap-4 items-center p-4 text-slate-800">
+      <ReactLoading type='spin' color='#CCC' width={24} height={24} />
+      <span>Getting Data ...</span>
+    </div>
   </div>
 }
 
 export default function Home() {
   const [displayPokemon, setdisplayPokemon] = useState([]);
+  const [pokemonDetails, setPokemonDetails] = useState([]);
   const [paginationParam, setpaginationParam] = useState({
-    limit: 10,
+    limit: 20,
     offset: 0
   });
-  
+  const [fetchingPage, setfetchingPage] = useState(0);
+  const [fetchingDetail, setFetchingDetail] = useState(0);
+
   const doNext = () => {
     setpaginationParam(prevState => ({
       ...prevState,
       offset: prevState.offset + prevState.limit
     }))
   }
-  
+
   const doPrev = () => {
     setpaginationParam(prevState => ({
       ...prevState,
       offset: prevState.offset - prevState.limit
     }))
   }
-  
+
   useEffect(() => {
-    // Poke.getPokemonByName(['eevee', 'ditto']) // with Promise
-    //   .then((response) => {
-    //     console.log(response);
-    //   })
-    //   .catch((error) => {
-    //     console.log('There was an ERROR: ', error);
-    //   });
-    Poke.getPokemonsList(paginationParam).then((pokemons) => {
-      setdisplayPokemon(pokemons)
-      console.log({pokemons})
-    })
+    if(! fetchingPage) {
+      setfetchingPage(1)
+      Poke.getPokemonsList(paginationParam).then((pokemons) => {
+        setdisplayPokemon(pokemons)
+        // console.log({pokemons})
+      }).then(() => {
+        setfetchingPage(0)
+      })
+    }
   }, [paginationParam]);
-  
+
+  useEffect(() => {
+    if(! fetchingDetail) {
+      setFetchingDetail(1)
+      let nameOnly = displayPokemon.results ?? []
+      nameOnly = nameOnly.map(poke => poke.name)
+      Poke.getPokemonByName(nameOnly).then((detailPokes) => {
+        setPokemonDetails(detailPokes)
+        console.log({detailPokes})
+      }).then(() => {
+        setFetchingDetail(0)
+      })
+    }
+  }, [displayPokemon])
+
   return (
     <div>
       <Head>
@@ -55,24 +101,28 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className='container mx-auto'>
-        <h3 className='text-3xl text-center mt-10'>Pokedex</h3>
-        <div className="my-4">{ JSON.stringify(paginationParam) }</div>
-        <div className='mt-5 grid grid-cols-6 gap-4'>
-          {
-            displayPokemon?.previous && <PokeCard onClick={doPrev} label='< Previous'></PokeCard>
-          }
-          {
-            displayPokemon?.results && displayPokemon.results.map((poke, idx) => 
-              (
-                <PokeCard key={idx} label={poke.name} url={poke.url}></PokeCard>
+      <main className='h-screen text-gray-50'>
+        <LoadingTop hidden={![fetchingPage, fetchingDetail].includes(1)} />
+        <div className='container mx-auto'>
+          <h3 className='text-3xl text-center mt-10'>Pokedex</h3>
+          <div className="my-4">{ JSON.stringify(paginationParam) }</div>
+          <div className='mt-5 grid grid-cols-6 gap-4'>
+            {
+              displayPokemon?.previous && <PokeCard onClick={doPrev} label='< Previous'></PokeCard>
+            }
+            {
+              pokemonDetails.map((poke, idx) =>
+                (
+                  <PokeCard key={idx} poke={poke} label={null}></PokeCard>
+                )
               )
-            )
-          }
-          {
-            displayPokemon?.next && <PokeCard label='Next >' onClick={doNext}></PokeCard>
-          }
+            }
+            {
+              displayPokemon?.next && <PokeCard label='Next >' onClick={doNext}></PokeCard>
+            }
+          </div>
         </div>
+
       </main>
     </div>
   )
