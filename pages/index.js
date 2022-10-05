@@ -1,47 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
 import Head from 'next/head'
 import Image from 'next/image'
 import Pokedex from 'pokedex-promise-v2'
 import { useState, useEffect } from 'react'
-import ReactLoading from 'react-loading';
+import PokeCard from '../components/main/PokeCard';
+import LoadingTop from '../components/main/LoadingTop'
 
 const Poke = new Pokedex()
-
-const padNum = (num, size=3) => {
-  num = num.toString();
-  while (num.length < size) num = "0" + num;
-  return num;
-}
-
-const PokeCard = ({poke=null, label=null, onClick}) => {
-  return <div onClick={() => onClick()} className="px-4 py-3 mt-10 border border-gray-300 hover:bg-slate-700 cursor-pointer rounded">
-    {
-      poke ?
-      <div className='flex justify-center -mt-10'>
-        <img src={poke.sprites.front_default} alt={poke.name} />
-      </div>
-      // <div className="text-xs text-gray-500 break-words">{poke.sprites.back_default}</div>
-      : null
-    }
-    {
-      poke ?
-      <div className="flex justify-between items-end">
-        <div className='text-xs opacity-50'>{'#' + padNum(poke.id)}</div>
-        <div className="font-medium capitalize">{poke.name}</div>
-      </div>
-      : <div className="font-medium">{label}</div>
-    }
-  </div>
-}
-
-const LoadingTop = ({hidden=1}) => {
-  return <div hidden={hidden} className="fixed top-0 right-0 m-4 w-96 bg-white rounded shadow z-20 opacity-50 hover:opacity-70 cursor-pointer">
-    <div className="w-full flex gap-4 items-center p-4 text-slate-800">
-      <ReactLoading type='spin' color='#CCC' width={24} height={24} />
-      <span>Getting Data ...</span>
-    </div>
-  </div>
-}
 
 export default function Home() {
   const [displayPokemon, setdisplayPokemon] = useState([]);
@@ -68,9 +32,15 @@ export default function Home() {
   }
 
   useEffect(() => {
+    Poke.getPokedexList().then(generations => {
+      console.log({generations})
+    })
+  }, []);
+
+  useEffect(() => {
     if(! fetchingPage) {
       setfetchingPage(1)
-      Poke.getPokemonsList(paginationParam).then((pokemons) => {
+      Poke.getPokemonsList({...paginationParam}).then((pokemons) => {
         setdisplayPokemon(pokemons)
         // console.log({pokemons})
       }).then(() => {
