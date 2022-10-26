@@ -1,67 +1,125 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import Pokedex from 'pokedex-promise-v2'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PokeCard from '../components/main/PokeCard';
 import LoadingTop from '../components/main/LoadingTop'
+import RegionTab from '../components/main/RegionTab';
 
 const Poke = new Pokedex()
 
 export default function Home() {
-  const [displayPokemon, setdisplayPokemon] = useState([]);
-  const [pokemonDetails, setPokemonDetails] = useState([]);
-  const [paginationParam, setpaginationParam] = useState({
-    limit: 20,
-    offset: 0
+  const limitPokemon = 20
+  let lastPokemonEntry = useRef(0)
+
+  const [pageState, setpageState] = useState({
+    loading: {
+      pokedexList: 1,
+      pokedexSelected: 0,
+      pokemonList: 0
+    },
+    pokedex: {
+      list: [],
+      selected: null
+    },
+    pokemonList: [],
+    pokemonDisplay: []
   });
-  const [fetchingPage, setfetchingPage] = useState(0);
-  const [fetchingDetail, setFetchingDetail] = useState(0);
 
-  const doNext = () => {
-    setpaginationParam(prevState => ({
-      ...prevState,
-      offset: prevState.offset + prevState.limit
-    }))
-  }
-
-  const doPrev = () => {
-    setpaginationParam(prevState => ({
-      ...prevState,
-      offset: prevState.offset - prevState.limit
-    }))
-  }
-
-  useEffect(() => {
-    Poke.getPokedexList().then(generations => {
-      console.log({generations})
+  const updateState = (newState) => {
+    setpageState(prev => {
+      return {
+        ...prev,
+        ...newState
+      }
     })
+  }
+
+  const getPokedexList = () => {
+    updateState({
+      loading: {
+        ...pageState.loading,
+        pokedexList: 1
+      }
+    })
+    Poke.getPokedexList()
+    .catch(e => {
+      console.error('getPokedexList', e)
+    })
+    .then(resp => {
+      updateState({
+        loading: {
+          ...pageState.loading,
+          pokedexList: 0
+        },
+        pokedex: {
+          list: resp.results,
+          selected: resp.results[0].name
+        }
+      })
+    })
+  }
+
+  const getPokemonDisplay = (pokemonList=[]) => {
+    if(pageState.loading.pokemonList) {
+      alert('Loading. Please Wait...')
+      return false
+    } // endif
+
+    const nextLast = lastPokemonEntry.current + limitPokemon
+    let catchEntry = pokemonList.filter(entry => {
+      return entry.entry_number > lastPokemonEntry.current && entry.entry_number <= nextLast
+    })
+
+    let pokemonDisplay = catchEntry
+    if(lastPokemonEntry.current > 0) {
+      pokemonDisplay = [
+        ...pageState.pokemonDisplay,
+        ...pokemonDisplay
+      ]
+    } // endif
+    console.log({pokemonDisplay, catchEntry, lastPokemonEntry, pokemonList})
+    lastPokemonEntry.current = nextLast
+
+    return pokemonDisplay
+  }
+
+  const loadPokemonDisplay = () => {
+    let pokemonDisplay = getPokemonDisplay(pageState.pokemonList)
+    updateState({
+      pokemonDisplay
+    })
+  }
+
+  const getPokedexDetail = async (name) => {
+    updateState({
+      loading: {
+        ...pageState.loading,
+        pokedexSelected: 1
+      }
+    })
+    Poke.getPokedexByName(name).then(resp => {
+      lastPokemonEntry.current = 0
+      const pokemonDisplay = getPokemonDisplay(resp.pokemon_entries)
+
+      updateState({
+        loading: {
+          ...pageState.loading,
+          pokedexSelected: 0
+        },
+        pokedex: {
+          ...pageState.pokedex,
+          selected: name
+        },
+        pokemonList: resp.pokemon_entries,
+        pokemonDisplay: pokemonDisplay
+      })
+    })
+  }
+
+  useEffect(() => {
+    getPokedexList()
   }, []);
-
-  useEffect(() => {
-    if(! fetchingPage) {
-      setfetchingPage(1)
-      Poke.getPokemonsList({...paginationParam}).then((pokemons) => {
-        setdisplayPokemon(pokemons)
-        // console.log({pokemons})
-      }).then(() => {
-        setfetchingPage(0)
-      })
-    }
-  }, [paginationParam]);
-
-  useEffect(() => {
-    if(! fetchingDetail) {
-      setFetchingDetail(1)
-      let nameOnly = displayPokemon.results ?? []
-      nameOnly = nameOnly.map(poke => poke.name)
-      Poke.getPokemonByName(nameOnly).then((detailPokes) => {
-        setPokemonDetails(detailPokes)
-        console.log({detailPokes})
-      }).then(() => {
-        setFetchingDetail(0)
-      })
-    }
-  }, [displayPokemon])
 
   return (
     <div>
@@ -72,27 +130,45 @@ export default function Home() {
       </Head>
 
       <main className='h-screen text-gray-50'>
-        <LoadingTop hidden={![fetchingPage, fetchingDetail].includes(1)} />
-        <div className='container mx-auto'>
-          <h3 className='text-3xl text-center mt-10'>Pokedex</h3>
-          <div className="my-4">{ JSON.stringify(paginationParam) }</div>
+        <LoadingTop hidden={![pageState.loading.pokedexList, pageState.loading.pokemonList, pageState.loading.pokedexSelected].includes(1)} />
+        <div className='container mx-auto py-10'>
+          <h3 className='text-3xl text-center'>Pokedex</h3>
+
+          <div>Region Select</div>
+          <div className="flex gap-2 justify-center w-full overflow-y-auto">
+            {
+              pageState.pokedex.list.map(region => (
+                <RegionTab
+                  onClick={() => getPokedexDetail(region.name)}
+                  title={region.name} key={region.url}
+                  isActive={region.name == pageState.pokedex.selected}
+                   />
+              ))
+            }
+          </div>
+
           <div className='mt-5 grid grid-cols-6 gap-4'>
             {
-              displayPokemon?.previous && <PokeCard onClick={doPrev} label='< Previous'></PokeCard>
-            }
-            {
-              pokemonDetails.map((poke, idx) =>
+              pageState.pokemonDisplay.map(entry =>
                 (
-                  <PokeCard key={idx} poke={poke} label={null}></PokeCard>
+                  <PokeCard key={entry.entry_number}
+                    pokedexNumber={entry.entry_number}
+                    url={entry?.pokemon_species?.url}
+                    pokemonName={entry?.pokemon_species?.name}
+                    />
                 )
               )
             }
-            {
-              displayPokemon?.next && <PokeCard label='Next >' onClick={doNext}></PokeCard>
-            }
+          </div>
+
+          <div className='flex justify-center my-8'>
+            <button type='button'
+              onClick={loadPokemonDisplay}
+              className='px-2 py-1 text-white rounded-md border border-white hover:bg-slate-700'>
+              Load More
+            </button>
           </div>
         </div>
-
       </main>
     </div>
   )
