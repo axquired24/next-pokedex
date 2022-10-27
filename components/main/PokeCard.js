@@ -27,9 +27,9 @@ const PokeCard = ({pokemonName='', pokedexNumber=0, url='', onClick}) => {
       console.error('getPokemonDetail', e)
     })
     .then(resp => {
-      console.log('PokeCard', {
-        pokemonName, resp
-      })
+      // console.log('PokeCard', {
+      //   pokemonName, resp
+      // })
       setPokemon(prev => {
         return {
           ...prev,
@@ -59,7 +59,7 @@ const PokeCard = ({pokemonName='', pokedexNumber=0, url='', onClick}) => {
 
   const getElm = () => {
     return pokemon.detail?.id ?
-    <div onClick={onClick} className="px-4 py-3 mt-10 border border-gray-300 hover:bg-slate-700 cursor-pointer rounded">
+    <div onClick={onClick} className="px-4 py-3 mb-4 border border-gray-300 hover:bg-slate-700 cursor-pointer rounded">
       <div className='flex justify-center -mt-10'>
         <img src={pokemon.detail?.sprites?.front_default} alt={pokemon.detail?.name} />
       </div>

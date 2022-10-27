@@ -9,7 +9,7 @@ import RegionTab from '../components/main/RegionTab';
 const Poke = new Pokedex()
 
 export default function Home() {
-  const limitPokemon = 20
+  const limitPokemon = 50
   let lastPokemonEntry = useRef(0)
 
   const [pageState, setpageState] = useState({
@@ -18,11 +18,15 @@ export default function Home() {
       pokedexSelected: 0,
       pokemonList: 0
     },
+    show: {
+      loadmore: 1
+    },
     pokedex: {
       list: [],
       selected: null
     },
     pokemonList: [],
+    pokemonMaxEntry: 0,
     pokemonDisplay: []
   });
 
@@ -57,6 +61,8 @@ export default function Home() {
           selected: resp.results[0].name
         }
       })
+
+      return resp
     })
   }
 
@@ -86,7 +92,12 @@ export default function Home() {
 
   const loadPokemonDisplay = () => {
     let pokemonDisplay = getPokemonDisplay(pageState.pokemonList)
+    console.log('loadPokemonDisplay', {limitPokemon, lastPokemonEntry, pageState})
     updateState({
+      show: {
+        ...pageState.show,
+        loadmore: lastPokemonEntry.current < pageState.pokemonMaxEntry
+      },
       pokemonDisplay
     })
   }
@@ -101,21 +112,31 @@ export default function Home() {
     Poke.getPokedexByName(name).then(resp => {
       lastPokemonEntry.current = 0
       const pokemonDisplay = getPokemonDisplay(resp.pokemon_entries)
+      const entryOnly = resp.pokemon_entries.map(entry => entry.entry_number)
+      const pokemonMaxEntry = Math.max(...entryOnly)
 
       updateState({
         loading: {
           ...pageState.loading,
           pokedexSelected: 0
         },
-        pokedex: {
-          ...pageState.pokedex,
-          selected: name
+        show: {
+          ...pageState.show,
+          loadmore: limitPokemon < pokemonMaxEntry
         },
         pokemonList: resp.pokemon_entries,
-        pokemonDisplay: pokemonDisplay
+        pokemonDisplay: pokemonDisplay,
+        pokemonMaxEntry
       })
     })
   }
+
+  useEffect(() => {
+    if(pageState.pokedex.selected) {
+      getPokedexDetail(pageState.pokedex.selected)
+    } // endif
+
+  }, [pageState.pokedex.selected]);
 
   useEffect(() => {
     getPokedexList()
@@ -131,23 +152,29 @@ export default function Home() {
 
       <main className='h-screen text-gray-50'>
         <LoadingTop hidden={![pageState.loading.pokedexList, pageState.loading.pokemonList, pageState.loading.pokedexSelected].includes(1)} />
-        <div className='container mx-auto py-10'>
+        <div className='container mx-auto py-10 px-4 md:px-0'>
           <h3 className='text-3xl text-center'>Pokedex</h3>
 
-          <div>Region Select</div>
-          <div className="flex gap-2 justify-center w-full overflow-y-auto">
+          <div className='my-4'>Region Select</div>
+          <div className="w-full overflow-x-scroll flex gap-4 pb-6">
             {
               pageState.pokedex.list.map(region => (
                 <RegionTab
-                  onClick={() => getPokedexDetail(region.name)}
+                  onClick={() => updateState({
+                    pokedex: {
+                      ...pageState.pokedex,
+                      selected: region.name
+                    }
+                  })}
                   title={region.name} key={region.url}
                   isActive={region.name == pageState.pokedex.selected}
-                   />
+                  />
               ))
             }
           </div>
 
-          <div className='mt-5 grid grid-cols-6 gap-4'>
+          <div className='my-4'>Pokemon</div>
+          <div className='grid grid-cols-2 lg:grid-cols-6 gap-4 md:px-0'>
             {
               pageState.pokemonDisplay.map(entry =>
                 (
@@ -161,13 +188,22 @@ export default function Home() {
             }
           </div>
 
-          <div className='flex justify-center my-8'>
-            <button type='button'
-              onClick={loadPokemonDisplay}
-              className='px-2 py-1 text-white rounded-md border border-white hover:bg-slate-700'>
-              Load More
-            </button>
-          </div>
+          {
+            pageState.show.loadmore ?
+            <div className='flex justify-center my-8'>
+              <button type='button'
+                onClick={loadPokemonDisplay}
+                className='px-2 py-1 text-white rounded-md border border-white hover:bg-slate-700'>
+                Load More
+              </button>
+            </div>
+            :
+            <div className="my-8 w-full border-t border-white relative">
+              <div className='absolute text-center left-1/2 top-0 -translate-x-1/2 -mt-3 bg-slate-800 w-48'>
+                End of Page
+              </div>
+            </div>
+          }
         </div>
       </main>
     </div>
