@@ -9,7 +9,7 @@ import RegionTab from '../components/main/RegionTab';
 const Poke = new Pokedex()
 
 export default function Home() {
-  const limitPokemon = 50
+  const limitPokemon = 48
   let lastPokemonEntry = useRef(0)
 
   const [pageState, setpageState] = useState({
@@ -152,28 +152,30 @@ export default function Home() {
 
       <main className='h-screen text-gray-50'>
         <LoadingTop hidden={![pageState.loading.pokedexList, pageState.loading.pokemonList, pageState.loading.pokedexSelected].includes(1)} />
-        <div className='container mx-auto py-10 px-4 md:px-0'>
-          <h3 className='text-3xl text-center'>Pokedex</h3>
-
-          <div className='my-4'>Region Select</div>
-          <div className="w-full overflow-x-scroll flex gap-4 pb-6">
-            {
-              pageState.pokedex.list.map(region => (
-                <RegionTab
-                  onClick={() => updateState({
-                    pokedex: {
-                      ...pageState.pokedex,
-                      selected: region.name
-                    }
-                  })}
-                  title={region.name} key={region.url}
-                  isActive={region.name == pageState.pokedex.selected}
-                  />
-              ))
-            }
+        <div className='container mx-auto pb-10 px-4 md:px-0'>
+          <div className='fixed z-20 top-0 w-full bg-slate-800'>
+            <div className='my-4'>Region Select</div>
+            <div className="w-full flex gap-4 pb-6 overflow-x-scroll">
+              {
+                pageState.pokedex.list.map(region => (
+                  <RegionTab
+                    onClick={() => updateState({
+                      pokedex: {
+                        ...pageState.pokedex,
+                        selected: region.name
+                      }
+                    })}
+                    title={region.name} key={region.url}
+                    isActive={region.name == pageState.pokedex.selected}
+                    />
+                ))
+              }
+            </div>
           </div>
 
-          <div className='my-4'>Pokemon</div>
+          <h3 className='mt-36 text-3xl text-center'>Pokedex</h3>
+
+          <div className='my-6'>Pokemon</div>
           <div className='grid grid-cols-2 lg:grid-cols-6 gap-4 md:px-0'>
             {
               pageState.pokemonDisplay.map(entry =>
