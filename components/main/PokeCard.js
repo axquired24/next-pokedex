@@ -177,7 +177,7 @@ const DetailModal = ({species, detail, updateStatePage}) => {
 
       <div className="overflow-y-auto h-96 p-4">
         <div className="my-2">Common Version</div>
-        <div className="mt-12 grid grid-cols-4 gap-3">
+        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-3">
           {
             commonSprite.map(sp => (
               <div key={sp[0]} className={defaultCls + getBgColor(species?.color?.name)}>
@@ -190,7 +190,7 @@ const DetailModal = ({species, detail, updateStatePage}) => {
         </div>
 
         <div className="my-2">Shiny Version</div>
-        <div className="mt-12 grid grid-cols-4 gap-3">
+        <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-3">
           {
             shinySprite.map(sp => (
               <div key={sp[0]} className={defaultCls + getBgColor(species?.color?.name)}>
