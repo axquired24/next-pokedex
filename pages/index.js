@@ -150,32 +150,31 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className='h-screen text-gray-50'>
+      <main className='h-screen text-gray-900'>
         <LoadingTop hidden={![pageState.loading.pokedexList, pageState.loading.pokemonList, pageState.loading.pokedexSelected].includes(1)} />
-        <div className='container mx-auto pb-10 px-4 md:px-0'>
-          <div className='fixed z-20 top-0 w-full bg-slate-800'>
-            <div className='my-4'>Region Select</div>
-            <div className="w-full flex gap-4 pb-6 overflow-x-scroll">
-              {
-                pageState.pokedex.list.map(region => (
-                  <RegionTab
-                    onClick={() => updateState({
-                      pokedex: {
-                        ...pageState.pokedex,
-                        selected: region.name
-                      }
-                    })}
-                    title={region.name} key={region.url}
-                    isActive={region.name == pageState.pokedex.selected}
-                    />
-                ))
-              }
-            </div>
+        <div className='fixed z-20 top-0 left-1/2 -translate-x-1/2 w-full bg-gray-50 container mx-auto'>
+          <div className='my-4 font-semibold text-xl'>Region Select</div>
+          <div className="w-full flex gap-4 pb-6 overflow-x-scroll">
+            {
+              pageState.pokedex.list.map(region => (
+                <RegionTab
+                  onClick={() => updateState({
+                    pokedex: {
+                      ...pageState.pokedex,
+                      selected: region.name
+                    }
+                  })}
+                  title={region.name} key={region.url}
+                  isActive={region.name == pageState.pokedex.selected}
+                  />
+              ))
+            }
           </div>
-
+        </div>
+        <div className='container mx-auto pb-10 px-4 md:px-0'>
           <h3 className='mt-36 text-3xl text-center'>Pokedex</h3>
 
-          <div className='my-6'>Pokemon</div>
+          <div className='my-6 font-semibold'>Found {pageState.pokemonList.length} Pokemons</div>
           <div className='grid grid-cols-2 lg:grid-cols-6 gap-4 md:px-0'>
             {
               pageState.pokemonDisplay.map(entry =>
@@ -195,7 +194,7 @@ export default function Home() {
             <div className='flex justify-center my-8'>
               <button type='button'
                 onClick={loadPokemonDisplay}
-                className='px-2 py-1 text-white rounded-md border border-white hover:bg-slate-700'>
+                className='btn btn-primary'>
                 Load More
               </button>
             </div>

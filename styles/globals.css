@@ -3,5 +3,19 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-800;
+  @apply bg-gray-50;
 }
+
+.btn {
+  @apply cursor-pointer drop-shadow-md px-3 py-2 text-sm capitalize rounded-md border border-gray-200;
+}
+
+.btn.btn-primary {
+  @apply bg-gray-50 text-gray-900
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary.active {
+  @apply bg-red-500 text-white font-semibold
+}
+

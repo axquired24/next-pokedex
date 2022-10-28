@@ -1,8 +1,11 @@
 const RegionTab = ({onClick, title="Sinnoh", isActive=false}) => {
   title = title.replace('-', ' ')
+  const defaultCls = "btn btn-primary w-96 whitespace-nowrap "
+  const inactiveCls = ""
+  const activeCls = "active"
   return (
     <div onClick={onClick}
-      className={"border cursor-pointer w-96 border-white whitespace-nowrap px-2 py-1 text-sm capitalize hover:bg-slate-700 rounded-md " + (isActive ? "bg-slate-700" : "")}>
+      className={defaultCls + (isActive ? activeCls : inactiveCls)}>
       { title }
     </div>
   );
