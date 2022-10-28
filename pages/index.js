@@ -152,7 +152,7 @@ export default function Home() {
 
       <main className='h-screen text-gray-900'>
         <LoadingTop hidden={![pageState.loading.pokedexList, pageState.loading.pokemonList, pageState.loading.pokedexSelected].includes(1)} />
-        <div className='fixed z-20 top-0 left-1/2 -translate-x-1/2 w-full bg-gray-50 container mx-auto'>
+        <div className='fixed px-4 md:px-0 z-20 top-0 left-1/2 -translate-x-1/2 w-full bg-gray-50 container mx-auto'>
           <div className='my-4 font-semibold text-xl'>Region Select</div>
           <div className="w-full flex gap-4 pb-6 overflow-x-scroll">
             {
@@ -172,7 +172,10 @@ export default function Home() {
           </div>
         </div>
         <div className='container mx-auto pb-10 px-4 md:px-0'>
-          <h3 className='mt-36 text-3xl text-center'>Pokedex</h3>
+          <h3 className='mt-36 text-3xl text-center'>
+            <span className='text-red-600'>Poke</span>
+            <span>Dex</span>
+          </h3>
 
           <div className='my-6 font-semibold'>Found {pageState.pokemonList.length} Pokemons</div>
           <div className='grid grid-cols-2 lg:grid-cols-6 gap-4 md:px-0'>
