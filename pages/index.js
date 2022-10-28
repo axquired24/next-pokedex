@@ -202,8 +202,8 @@ export default function Home() {
               </button>
             </div>
             :
-            <div className="my-8 w-full border-t border-white relative">
-              <div className='absolute text-center left-1/2 top-0 -translate-x-1/2 -mt-3 bg-slate-800 w-48'>
+            <div className="my-8 w-full border-t border-slate-800 relative">
+              <div className='absolute text-center left-1/2 top-0 -translate-x-1/2 -mt-3 bg-gray-50 w-48'>
                 End of Page
               </div>
             </div>
