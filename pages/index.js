@@ -1,10 +1,12 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import Head from 'next/head'
 import Image from 'next/image'
 import Pokedex from 'pokedex-promise-v2'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Fragment } from 'react'
 import PokeCard from '../components/main/PokeCard';
-import LoadingTop from '../components/main/LoadingTop'
+import LoadingTop from '../components/main/LoadingTop';
 import RegionTab from '../components/main/RegionTab';
+import { Dialog, Transition } from '@headlessui/react'
 
 const Poke = new Pokedex()
 
@@ -27,7 +29,11 @@ export default function Home() {
     },
     pokemonList: [],
     pokemonMaxEntry: 0,
-    pokemonDisplay: []
+    pokemonDisplay: [],
+    pokeModal: {
+      elm: <div></div>,
+      show: false
+    }
   });
 
   const updateState = (newState) => {
@@ -84,7 +90,8 @@ export default function Home() {
         ...pokemonDisplay
       ]
     } // endif
-    console.log({pokemonDisplay, catchEntry, lastPokemonEntry, pokemonList})
+
+    // console.log({pokemonDisplay, catchEntry, lastPokemonEntry, pokemonList})
     lastPokemonEntry.current = nextLast
 
     return pokemonDisplay
@@ -129,6 +136,54 @@ export default function Home() {
         pokemonMaxEntry
       })
     })
+  }
+
+  const PokeModal = () => {
+    const handleClose = () => {
+      updateState({
+        pokeModal: {
+          ...pageState.pokeModal,
+          show: false
+        }
+      })
+    }
+    return (
+      <Transition appear show={pageState.pokeModal.show} as={Fragment}>
+        <Dialog as="div" className="relative z-20" onClose={handleClose}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  {
+                    pageState.pokeModal.elm
+                  }
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+    )
   }
 
   useEffect(() => {
@@ -186,6 +241,7 @@ export default function Home() {
                     pokedexNumber={entry.entry_number}
                     url={entry?.pokemon_species?.url}
                     pokemonName={entry?.pokemon_species?.name}
+                    updateStatePage={updateState}
                     />
                 )
               )
@@ -209,6 +265,8 @@ export default function Home() {
             </div>
           }
         </div>
+
+        <PokeModal />
       </main>
     </div>
   )
