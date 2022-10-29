@@ -1,10 +1,33 @@
+/* eslint-disable @next/next/no-img-element */
 import { Dialog } from "@headlessui/react";
+import { useEffect, useState } from "react";
 import PokeCard from "./PokeCard";
+import Pokedex from 'pokedex-promise-v2'
 
 import PokeVariants from "./PokeVariants";
 const { PokeTypeBtn, getBgColor } = PokeVariants
 
+const Poke = new Pokedex()
+
+const getEvolutions = (evolutionChain) => {
+  let evolutions = [
+    evolutionChain.species
+  ]
+  const extractEvolution = (evolutionChain) => {
+    evolutionChain.evolves_to.forEach(ev => {
+      evolutions.push(ev.species)
+      if(ev.evolves_to.length > 0) {
+        extractEvolution(ev)
+      }
+    })
+  }
+
+  extractEvolution(evolutionChain)
+  return evolutions
+}
+
 const PokeDetailModal = ({species, detail, updateStatePage}) => {
+  const [evolutions, setEvolutions] = useState([]);
   const sprites = Object.entries(detail.sprites).filter(sp => {
     return (sp[1] != null) && (typeof sp[1] == 'string')
   })
@@ -19,11 +42,22 @@ const PokeDetailModal = ({species, detail, updateStatePage}) => {
     }
   }) // end each
 
+  useEffect(() => {
+    // NextEvolution
+    if(species) {
+      Poke.getResource(species.evolution_chain.url)
+      .catch(e => console.error('Failed get evolution chain',e))
+      .then(resp => {
+        const evolutions = getEvolutions(resp.chain)
+        setEvolutions(evolutions)
+      })
+    }
+  }, [species]);
+
   const availRegion = species.pokedex_numbers.map(item => item.pokedex.name.replace('-', ' ')).join(', ')
   const allMoves = detail.moves.map(item => item.move.name.replace('-', ' ')).join(', ')
   const gameConsoles = detail.game_indices.map(item => item.version.name).join(', ')
   const abilities = detail.abilities.map(item => item.ability.name.replace('-', ' ')).join(', ')
-  const evolveFrom = species?.evolves_from_species
 
   console.log({species, detail, sprites})
   const handleClose = () => {
@@ -100,12 +134,20 @@ const PokeDetailModal = ({species, detail, updateStatePage}) => {
 
         <div className="mt-4 border-t border-gray-300">
           {
-            evolveFrom?.name ?
-            <div className="w-full md:w-48">
-              <div className="capitalize my-2 text-sm text-gray-600">Evolve From</div>
-              <PokeCard pokemonName={evolveFrom.name} pokedexNumber={0} url={evolveFrom.url} updateStatePage={updateStatePage} />
+            evolutions.length > 0 ?
+            <div className="w-full">
+              <div className="capitalize my-2 text-sm text-gray-600">Evolutions Chain</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {
+                  evolutions.map(ev => (
+                    <PokeCard
+                      key={ev.url}
+                      pokemonName={ev.name} pokedexNumber={0} url={ev.url} updateStatePage={updateStatePage} />
+                  ))
+                }
+              </div>
             </div>
-            : <PokeDescription label="Evolve From" value="-" />
+            : <PokeDescription label="Evolutions Chain" value="-" />
           }
         </div>
 
