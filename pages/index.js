@@ -11,7 +11,7 @@ import { Dialog, Transition } from '@headlessui/react'
 const Poke = new Pokedex()
 
 export default function Home() {
-  const limitPokemon = 48
+  const limitPokemon = 30
   let lastPokemonEntry = useRef(0)
 
   const [pageState, setpageState] = useState({
