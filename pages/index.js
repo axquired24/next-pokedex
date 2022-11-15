@@ -7,18 +7,21 @@ import PokeCard from '../components/main/PokeCard';
 import LoadingTop from '../components/main/LoadingTop';
 import RegionTab from '../components/main/RegionTab';
 import { Dialog, Transition } from '@headlessui/react'
+import SearchIcon from '../components/icon/SearchIcon';
 
 const Poke = new Pokedex()
 
 export default function Home() {
   const limitPokemon = 30
   let lastPokemonEntry = useRef(0)
+  const searchRef = useRef(null)
 
   const [pageState, setpageState] = useState({
     loading: {
       pokedexList: 1,
       pokedexSelected: 0,
-      pokemonList: 0
+      pokemonList: 0,
+      searchPokemon: 0
     },
     show: {
       loadmore: 1
@@ -33,7 +36,13 @@ export default function Home() {
     pokeModal: {
       elm: <div></div>,
       show: false
-    }
+    },
+    searchResults: [
+      // {
+      //   name:"pikachu",
+      //   url:"https://pokeapi.co/api/v2/pokemon-species/25/"
+      // }
+    ]
   });
 
   const updateState = (newState) => {
@@ -186,6 +195,52 @@ export default function Home() {
     )
   }
 
+  const doSearch = async() => {
+    if(pageState.loading.searchPokemon) {
+      return false;
+    } // endif
+
+    setpageState(prev => {
+      return {
+        ...prev,
+        loading: {
+          ...prev.loading,
+          searchPokemon: 1
+        }
+      }
+    })
+
+    const query = searchRef.current.value
+    const searchResults = []
+    if(query) {
+      await Poke.getPokemonByName(query)
+      .then(resp => {
+        searchResults.push(resp.species)
+      })
+      .catch(e => {
+        alert("Can't find pokemon: " + query)
+      })
+    } // endif
+
+    setpageState(prev => {
+      return {
+        ...prev,
+        loading: {
+          ...prev.loading,
+          searchPokemon: 0
+        },
+        searchResults
+      }
+    })
+  }
+
+  const doClearSearch = () => {
+    updateState({
+      searchResults: []
+    })
+    searchRef.current.value = ""
+  }
+
   useEffect(() => {
     if(pageState.pokedex.selected) {
       getPokedexDetail(pageState.pokedex.selected)
@@ -226,14 +281,48 @@ export default function Home() {
             }
           </div>
         </div>
-        <div className='container mx-auto pb-10 px-4 md:px-0'>
+        <div className='container mx-auto pt-4 pb-10 px-4 md:px-0'>
           <h3 className='mt-36 text-3xl text-center'>
             <span className='text-red-600'>Poke</span>
             <span>Dex</span>
           </h3>
 
-          <div className='my-6 font-semibold'>Found {pageState.pokemonList.length} Pokemons</div>
+          <div className="mb-6 grid grid-cols-4">
+            <div className='font-semibold col-span-4 lg:col-span-3'>Found {pageState.pokemonList.length} Pokemons</div>
+            <div className="col-span-4 lg:col-span-1 my-4 lg:my-0">
+              <div className="flex items-center justify-end">
+                <div className="relative">
+                  <div className="absolute right-0 top-0 p-3 z-20 text-black">
+                    <SearchIcon />
+                  </div>
+                  <input ref={searchRef} type="text" maxLength={12} placeholder="Search Pokemon" className="px-4 py-2 border border-gray-200 w-full" />
+                </div>
+                <button type='button'
+                  onClick={doSearch}
+                  className='btn btn-primary ml-2'>
+                  { pageState.loading.searchPokemon ? 'Loading...' : 'Search' }
+                </button>
+                <button type='button'
+                  onClick={doClearSearch}
+                  className='btn btn-primary ml-2'>
+                    Clear
+                </button>
+              </div>
+            </div>
+          </div>
           <div className='grid grid-cols-2 lg:grid-cols-6 gap-4 md:px-0'>
+            {
+              pageState.searchResults.map(ev =>
+                (
+                  <PokeCard
+                    searchResult
+                    key={ev.url}
+                    pokemonName={ev.name}
+                    pokedexNumber={999} url={ev.url} updateStatePage={updateState} />
+                )
+              )
+            }
+
             {
               pageState.pokemonDisplay.map(entry =>
                 (

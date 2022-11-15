@@ -21,6 +21,7 @@ const padNum = (num, size=3) => {
 
 const PokeCard = ({pokemonName='',
   pokedexNumber=0, url='',
+  searchResult=false,
   updateStatePage}) => {
   const [pokemon, setPokemon] = useState({
     detail: {},
@@ -74,6 +75,7 @@ const PokeCard = ({pokemonName='',
   }, [pokemonName]);
 
   const defaultCls = "px-4 py-3 mb-4 border cursor-pointer rounded "
+  const pokedexNumberStr = searchResult ? '#search-result' : '#' + padNum(pokedexNumber)
 
   const getElm = () => {
     return pokemon.detail?.id ?
@@ -84,7 +86,7 @@ const PokeCard = ({pokemonName='',
       <div className="flex justify-between items-end">
         {
           pokedexNumber > 0 ?
-          <div className='text-xs opacity-50'>{'#' + padNum(pokedexNumber)}</div>
+          <div className='text-xs opacity-50'>{pokedexNumberStr}</div>
           : <div></div>
         }
         <div className="font-medium capitalize text-right">{pokemon.detail?.name}</div>
