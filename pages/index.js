@@ -213,7 +213,7 @@ export default function Home() {
     const query = searchRef.current.value
     const searchResults = []
     if(query) {
-      await Poke.getPokemonByName(query)
+      await Poke.getPokemonByName(query.toLowerCase())
       .then(resp => {
         searchResults.push(resp.species)
       })
